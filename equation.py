@@ -110,6 +110,7 @@ delta_d_data = {
     "electric":[],
     "chemical":[],
 }
+#calculate delta d dataset
 def calculate_delta_d_data():
     global electric_spec_name
     global chemical_spec_name
@@ -122,16 +123,39 @@ def calculate_delta_d_data():
         print(find_unit_delta("chemical", row))
 calculate_delta_d_data()
 
-# Initialize weight data
-weight_data = []
-sum_weight = 0
+def find_an():
+    find_delta_d() / delta_d_data[]
 
+# Initialize weight data
+weight_data = {
+    #electric
+    "specific_impulse_electric": 1.5,
+    "input_power_electric": 1.5,
+    "thrust_to_power": 1.5,
+    "thrust_electric": 1.5,
+    "specific_mass": 1.5,
+    
+    #chemical
+    "thrust_chemical": 1.5,
+    "specific_impulse_electric": 1.5,
+    "operational_life": 1.5,
+    "engine_mass": 1.5,
+    
+    #combined
+    "multimode_specific_impulse": 1.5,
+    "propulsion_system_mass": 1.5,
+    "thrust_time": 1.5,
+    "system_mass": 1.5,   
+}
+sum_weight = 0
+#calculate weight sum
 def calculate_sum_weight():
     global sum_weight
     for weight in weight_data:
         sum_weight += weight
-
 calculate_sum_weight()
+
+
 
 A = sum_an_cn / sum_weight if sum_weight != 0 else 0
 
