@@ -143,7 +143,7 @@ weight_data = {
     #chemical
     "thrust_chemical": 1.5,
     "specific_impulse_chemical": 1.5,
-    "operational_life": 1.5,
+    "operational_life": 15,
     "engine_mass_chemical": 1.5,
     
     #combined
@@ -186,13 +186,80 @@ def calculate_sum_weight():
     global sum_weight
     for weight in weight_data.values():
         sum_weight += weight
-calculate_sum_weight()
+calculate_sum_weight() 
 
-a_value = {}
+# Step 1: Create the Database and Table
+def create_database_and_table():
+    # Connect to the SQLite database (or create it if it doesn't exist)
+    conn = sqlite3.connect('a_value_data.db')
+
+    # Create a cursor object
+    cursor = conn.cursor()
+
+    # Create the a_value table if it does not exist
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS a_value_table (
+        index_id INTEGER PRIMARY KEY,
+        a_value REAL,
+        electric_type TEXT,
+        chemical_type TEXT
+    )
+    ''')
+
+    # Commit the transaction
+    conn.commit()
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+create_database_and_table()
+# Step 2: Calculate `a_value` and Store in the Database
 def find_A_value_data():
+    global combination_list, sum_ancn_data, sum_weight, a_value
+
+    # Initialize a_value dictionary
+    a_value = {}
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect('a_value_data.db')
+    cursor = conn.cursor()
+
+    # Iterate over the combination_list keys and calculate a_value
     for index in combination_list.keys():
-        a_value[index] = 0
         a_value[index] = sum_ancn_data[index] / sum_weight
+        chemical_type = combination_list[index][1]
+        electric_type = combination_list[index][0]
+
+        # Insert or replace the a_value and chemical_type into the database
+        cursor.execute('''
+        INSERT OR REPLACE INTO a_value_table (index_id, a_value, electric_type, chemical_type)
+        VALUES (?, ?, ?, ?)
+        ''', (index, a_value[index], electric_type, chemical_type))
+
+    # Commit the transaction and close the connection
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Step 3: Fetch and Sort Data by `a_value`
+def fetch_sorted_a_value_data():
+    # Connect to the SQLite database
+    conn = sqlite3.connect('a_value_data.db')
+    cursor = conn.cursor()
+
+    # Fetch data from the a_value_table sorted by a_value
+    cursor.execute('''
+    SELECT * FROM a_value_table ORDER BY a_value
+    ''')
+
+    sorted_data = cursor.fetchall()
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+
+    return sorted_data
+
 find_A_value_data()
 print(a_value)
 
