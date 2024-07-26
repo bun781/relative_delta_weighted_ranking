@@ -39,19 +39,6 @@ def initialized():
     conn.close()
 initialized()
 
-def get_column_count(table):
-    conn = sqlite3.connect('dataset.db')
-    cursor = conn.cursor()
-    
-    cursor.execute(f'PRAGMA table_info({table})')
-    columns_info = cursor.fetchall()
-    
-    column_count = len(columns_info)
-    
-    conn.close()
-    
-    return column_count
-
 def get_row_count(table):
     conn = sqlite3.connect('dataset.db')
     cursor = conn.cursor()
@@ -61,7 +48,7 @@ def get_row_count(table):
     
     conn.close()
     
-    return result[0]
+    return float(result[0])
 
 def find_extrema_in_column(table, spec, extrema):
     conn = sqlite3.connect("dataset.db")
@@ -101,14 +88,10 @@ def find_delta_d(table, propulsion_type, spec):
 def find_unit_delta(table, spec):
     return (find_extrema_in_column(table, spec, "max") - find_extrema_in_column(table, spec, "min")) / get_row_count(table)
 
-# Initialize variables
-sum_an_cn = 0
-delta_d_data = []
-
 #delta_d_dataset initialize
-delta_d_data = {
-    "electric":[],
-    "chemical":[],
+unit_delta_data = {
+    "electric":{},
+    "chemical":{},
 }
 #calculate delta d dataset
 def calculate_delta_d_data():
@@ -116,30 +99,52 @@ def calculate_delta_d_data():
     global chemical_spec_name
     # Calculate delta_d_data
     for spec in electric_spec_name:
-        delta_d_data["electric"].append(find_unit_delta("electric", spec))
+        unit_delta_data["electric"][spec] = find_unit_delta("electric", spec)
         print(find_unit_delta("electric", spec))
     for row in chemical_spec_name:
-        delta_d_data["chemical"].append(find_unit_delta("chemical", row))
+        unit_delta_data["chemical"][row] = find_unit_delta("chemical", row)
         print(find_unit_delta("chemical", row))
 calculate_delta_d_data()
+#find an value
+def find_an(table, propulsion_type, spec):
+    return find_delta_d(table, propulsion_type, spec) / unit_delta_data[table][spec]
 
-def find_an():
-    find_delta_d() / delta_d_data[]
 
-# Initialize weight data
+#find an * cn
+def find_ancn(table, propulsion_type, spec):
+    global weight_data
+    return find_an(table, propulsion_type, spec) * weight_data[spec]
+
+#get propulsion system name
+def get_propulsion_system_name(table):
+    conn = sqlite3.connect("dataset.db")
+    cursor = conn.cursor()
+    
+    query = f"SELECT concept FROM {table}"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    values = [row[0] for row in rows]
+    
+    return values
+
+#weight data
 weight_data = {
     #electric
     "specific_impulse_electric": 1.5,
     "input_power_electric": 1.5,
-    "thrust_to_power": 1.5,
+    "thrust_to_power_electric": 1.5,
     "thrust_electric": 1.5,
-    "specific_mass": 1.5,
+    "specific_mass_electric": 1.5,
     
     #chemical
     "thrust_chemical": 1.5,
-    "specific_impulse_electric": 1.5,
+    "specific_impulse_chemical": 1.5,
     "operational_life": 1.5,
-    "engine_mass": 1.5,
+    "engine_mass_chemical": 1.5,
     
     #combined
     "multimode_specific_impulse": 1.5,
@@ -147,18 +152,51 @@ weight_data = {
     "thrust_time": 1.5,
     "system_mass": 1.5,   
 }
+
+#list of possible combinations
+combination_index = 1
+combination_list = {}
+def get_list_of_possible_combinations():
+    global combination_index
+    global combination_list
+    for electric_system in  get_propulsion_system_name("electric"):
+        for chemical_system in get_propulsion_system_name("chemical"):
+            combination_list[combination_index] = [electric_system, chemical_system]
+            combination_index += 1
+get_list_of_possible_combinations() 
+print(combination_list)
+
+#create a dictionary for the sum of an * cn
+sum_ancn_data = {}
+def find_sum_ancn_data():
+    global sum_ancn_data
+    for index, value in combination_list.items():
+        electric_system, chemical_system = value
+        sum_ancn_data[index] = 0
+        for spec in electric_spec_name:
+            sum_ancn_data[index] += find_ancn("electric", electric_system, spec)
+        for spec in chemical_spec_name:
+            sum_ancn_data[index] += find_ancn("chemical", chemical_system, spec)
+find_sum_ancn_data()
+
+
 sum_weight = 0
 #calculate weight sum
 def calculate_sum_weight():
     global sum_weight
-    for weight in weight_data:
+    for weight in weight_data.values():
         sum_weight += weight
 calculate_sum_weight()
 
+a_value = {}
+def find_A_value_data():
+    for index in combination_list.keys():
+        a_value[index] = 0
+        a_value[index] = sum_ancn_data[index] / sum_weight
+find_A_value_data()
+print(a_value)
 
 
-A = sum_an_cn / sum_weight if sum_weight != 0 else 0
 
-print(f"delta_d_data: {delta_d_data}")
-print(electric_spec_name)
-print(f"A: {A}")
+    
+
