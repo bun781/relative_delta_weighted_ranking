@@ -10,10 +10,10 @@ cursor = conn.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS electric (
     concept TEXT,
-    specific_impulse_sec REAL,
-    input_power_kw REAL,
-    thrust_power_mN_per_kw REAL,
-    specific_mass_kg_per_kw REAL,
+    specific_impulse_electric REAL,
+    input_power_electric REAL,
+    thrust_to_power_electric REAL,
+    specific_mass_electric REAL,
     propellant TEXT
 )
 ''')
@@ -21,11 +21,11 @@ CREATE TABLE IF NOT EXISTS electric (
 # Create the propellants table
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS chemical (
-    propellant TEXT,
-    nominal_thrust_n REAL,
-    specific_impulse_sec REAL,
-    operational_life_sec REAL,
-    engine_mass_kg REAL
+    concept TEXT,
+    thrust_chemical REAL,
+    specific_impulse_chemical REAL,
+    operational_life REAL,
+    engine_mass_chemical REAL
 )
 ''')
 
@@ -40,7 +40,7 @@ propulsion_data = [
 ]
 
 cursor.executemany('''
-INSERT INTO electric (concept, specific_impulse_sec, input_power_kw, thrust_power_mN_per_kw, specific_mass_kg_per_kw, propellant)
+INSERT INTO electric (concept, specific_impulse_electric, input_power_electric, thrust_to_power_electric, specific_mass_electric, propellant)
 VALUES (?, ?, ?, ?, ?, ?)
 ''', propulsion_data)
 
@@ -54,7 +54,7 @@ propellants_data = [
 ]
 
 cursor.executemany('''
-INSERT INTO chemical (propellant, nominal_thrust_n, specific_impulse_sec, operational_life_sec, engine_mass_kg)
+INSERT INTO chemical (concept, thrust_chemical, specific_impulse_chemical, operational_life, engine_mass_chemical)
 VALUES (?, ?, ?, ?, ?)
 ''', propellants_data)
 
