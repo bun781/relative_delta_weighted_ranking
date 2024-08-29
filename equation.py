@@ -18,7 +18,6 @@ def initialized():
 
     #remove strings (database specific, could have had added a variable-type filter but it is unecessary in this context)
     electric_spec_name.remove(electric_spec_name[0])
-    electric_spec_name.remove(electric_spec_name[4])
     
     print(electric_spec_name)
 
@@ -28,10 +27,9 @@ def initialized():
     global chemical_spec_name 
     for column in chemical_spec:
         chemical_spec_name.append(column[1])
-
+    print(chemical_spec_name)
     #remove strings (database specific, could have had added a variable-type filter but it is unecessary in this context)
     chemical_spec_name.remove(chemical_spec_name[0])
-    chemical_spec_name.remove(chemical_spec_name[3])
 
     print(chemical_spec_name)
     
@@ -134,23 +132,19 @@ def get_propulsion_system_name(table):
 #weight data
 weight_data = {
     #electric
-    "specific_impulse_electric": 1.5,
-    "input_power_electric": 1.5,
-    "thrust_to_power_electric": 1.5,
-    "thrust_electric": 1.5,
-    "specific_mass_electric": 1.5,
+    "specific_impulse_electric": 40,
+    "input_power_electric": 1,
+    "thrust_to_power_electric": 0.1,
+    "thrust_electric": 1,
+    "thrust_to_mass_electric": 1,
+    "specific_mass_electric": 1,
     
     #chemical
-    "thrust_chemical": 1.5,
-    "specific_impulse_chemical": 1.5,
-    "operational_life": 15,
-    "engine_mass_chemical": 1.5,
-    
-    #combined
-    "multimode_specific_impulse": 1.5,
-    "propulsion_system_mass": 1.5,
-    "thrust_time": 1.5,
-    "system_mass": 1.5,   
+    "thrust_chemical": 1,
+    "specific_impulse_chemical": 1,
+    "operational_life": 1,
+    "engine_mass_chemical": 1,
+    "thrust_to_weight_chemical": 1,
 }
 
 #list of possible combinations
@@ -199,7 +193,7 @@ def create_database_and_table():
     # Create the a_value table if it does not exist
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS a_value_table (
-        index_id INTEGER PRIMARY KEY,
+        index_id REAL,
         a_value REAL,
         electric_type TEXT,
         chemical_type TEXT
@@ -241,26 +235,52 @@ def find_A_value_data():
     cursor.close()
     conn.close()
 
-# Step 3: Fetch and Sort Data by `a_value`
-def fetch_sorted_a_value_data():
-    # Connect to the SQLite database
-    conn = sqlite3.connect('a_value_data.db')
-    cursor = conn.cursor()
+def finalData():
+    # Connect to the existing SQLite database file
+    source_db = 'a_value_data.db'
+    destination_db = 'final.db'
 
-    # Fetch data from the a_value_table sorted by a_value
-    cursor.execute('''
-    SELECT * FROM a_value_table ORDER BY a_value
+    # Connect to the source database
+    conn_source = sqlite3.connect(source_db)
+    cursor_source = conn_source.cursor()
+
+    # Retrieve and sort the data by 'a_value' in descending order
+    cursor_source.execute('''
+    SELECT * FROM a_value_table ORDER BY a_value DESC
     ''')
 
-    sorted_data = cursor.fetchall()
+    # Fetch the sorted data
+    sorted_data = cursor_source.fetchall()
 
-    # Close the connection
-    cursor.close()
-    conn.close()
+    # Close the source connection
+    conn_source.close()
 
-    return sorted_data
+    # Connect to the destination database
+    conn_dest = sqlite3.connect(destination_db)
+    cursor_dest = conn_dest.cursor()
 
+    # Create the new table in the destination database
+    cursor_dest.execute('''
+    CREATE TABLE IF NOT EXISTS final (
+        index_id INTEGER,
+        a_value REAL,
+        electric_type TEXT,
+        chemical_type TEXT
+    )
+    ''')
+
+    # Insert the sorted data into the new table
+    cursor_dest.executemany('INSERT INTO final VALUES (?, ?, ?, ?)', sorted_data)
+
+    # Commit the changes to update the destination file
+    conn_dest.commit()
+
+    # Close the destination connection
+    conn_dest.close()
+
+    print("Data sorted by a_value in descending order and saved to final.db in the 'final' table")
 find_A_value_data()
+finalData()
 print(a_value)
 
 
