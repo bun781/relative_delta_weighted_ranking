@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS chemical (
     thrust_to_weight_chemical REAL
 )
 ''')
+#inverse of weight
 
 # Data to be inserted into the table
 chemical_data = [
